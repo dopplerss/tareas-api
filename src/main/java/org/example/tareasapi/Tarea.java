@@ -1,8 +1,13 @@
 package org.example.tareasapi;
+ import jakarta.persistence.*;
 
-
+ @Entity
 public class Tarea {
+
+     @Id
+     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long id;
+
     private String nombre;
     private boolean completada;
     private int prioridad;

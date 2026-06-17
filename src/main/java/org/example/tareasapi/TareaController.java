@@ -1,49 +1,76 @@
 package org.example.tareasapi;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
+@RequestMapping("/tareas")
 public class TareaController {
 
-    // Datos de ejemplo (por ahora en memoria)
-    private List<Tarea> tareas = new ArrayList<>();
+    @Autowired
+    private TareaRepository tareaRepository;
 
-    public TareaController() {
-        // Agregamos tareas de ejemplo al iniciar
-        tareas.add(new Tarea(1L, "Aprender Spring Boot", false, 9));
-        tareas.add(new Tarea(2L, "Hacer ejercicio", false, 5));
-        tareas.add(new Tarea(3L, "Leer un libro", false, 3));
+    // Crear tarea
+    @PostMapping
+    public Tarea crearTarea(@RequestBody Tarea tarea) {
+        return tareaRepository.save(tarea);
     }
 
-    @GetMapping("/tareas")
-    public List<Tarea> obtenerTareas() {
-        return tareas;
+    // Obtener todas
+    @GetMapping
+    public List<Tarea> obtenerTodas() {
+        return tareaRepository.findAll();
     }
 
-    @GetMapping("/tareas/urgentes")
-    public List<Tarea> obtenerTareasUrgentes() {
-        List<Tarea> urgentes = new ArrayList<>();
-        for (Tarea t : tareas) {
-            if (t.getPrioridad() >= 8) {
-                urgentes.add(t);
-            }
-        }
-        return urgentes;
+    // Obtener una por ID
+    @GetMapping("/{id}")
+    public Tarea obtenerPorId(@PathVariable Long id) {
+        Optional<Tarea> tarea = tareaRepository.findById(id);
+        return tarea.orElse(null); // Por ahora, si no existe devuelve null
     }
 
-    @GetMapping("/tareas/{id}")
-    public Tarea obtenerTareaPorId(@PathVariable Long id) {
-        for (Tarea t : tareas) {
-            if (t.getId().equals(id)) {
-                return t;
-            }
+    // Actualizar tarea (marcar como completada)
+    @PutMapping("/{id}")
+    public Tarea actualizarTarea(@PathVariable Long id, @RequestBody Tarea tareaActualizada) {
+        Optional<Tarea> tareaOptional = tareaRepository.findById(id);
+        if (tareaOptional.isPresent()) {
+            Tarea tarea = tareaOptional.get();
+            tarea.setNombre(tareaActualizada.getNombre());
+            tarea.setCompletada(tareaActualizada.isCompletada());
+            tarea.setPrioridad(tareaActualizada.getPrioridad());
+            return tareaRepository.save(tarea);
         }
         return null;
+    }
+
+    // Eliminar tarea
+    @DeleteMapping("/{id}")
+    public void eliminarTarea(@PathVariable Long id) {
+        tareaRepository.deleteById(id);
+    }
+
+    // Obtener solo urgentes
+    @GetMapping("/urgentes")
+    public List<Tarea> obtenerUrgentes() {
+        List<Tarea> todas = tareaRepository.findAll();
+        return todas.stream()
+                .filter(t -> t.getPrioridad() >= 8)
+                .toList();
+    }
+
+
+    @GetMapping("/mayor-que/{prioridad}")
+    public List<Tarea> obtenerMayorQue(@PathVariable int prioridad) {
+        return tareaRepository.findByPrioridadGreaterThanEqual(prioridad);
+    }
+
+    @GetMapping("/contar-completadas")
+    public long contarCompletadas() {
+        return tareaRepository.findAll().stream()
+                .filter(Tarea::isCompletada)
+                .count();
     }
 }
