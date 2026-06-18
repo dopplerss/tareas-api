@@ -9,8 +9,8 @@ import java.util.List;
 public interface TareaRepository extends JpaRepository<Tarea, Long> {
     // Spring Data JPA genera automáticamente los métodos CRUD
     // findAll(), findById(), save(), deleteById(), etc.
-
     List<Tarea> findByPrioridadGreaterThanEqual(int prioridad);
 }
+
 
 
