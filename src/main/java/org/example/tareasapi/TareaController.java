@@ -1,19 +1,19 @@
 package org.example.tareasapi;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @RequestMapping("/tareas")
+@Validated
 @Tag(name = "Tareas", description = "API para gestionar tareas")
 public class TareaController {
 
@@ -31,7 +31,7 @@ public class TareaController {
     // Crear tarea
     @PostMapping
     @Operation(summary = "Crear una nueva tarea")
-    public Tarea crearTarea(@RequestBody Tarea tarea) {
+    public Tarea crearTarea(@Valid @RequestBody Tarea tarea) {
         return tareaRepository.save(tarea);
     }
 
@@ -52,18 +52,17 @@ public class TareaController {
 
     // Actualizar tarea (marcar como completada)
     @PutMapping("/{id}")
-    @Operation(summary = "Actualizar tarea por ID")
-    public Tarea actualizarTarea(@PathVariable Long id, @RequestBody Tarea tareaActualizada) {
-        Optional<Tarea> tareaOptional = tareaRepository.findById(id);
-        if (tareaOptional.isPresent()) {
-            Tarea tarea = tareaOptional.get();
-            tarea.setNombre(tareaActualizada.getNombre());
-            tarea.setCompletada(tareaActualizada.isCompletada());
-            tarea.setPrioridad(tareaActualizada.getPrioridad());
-            return tareaRepository.save(tarea);
-        }
-        return null;
+    @Operation(summary = "Actualizar una tarea")
+    public Tarea actualizarTarea(@PathVariable Long id, @Valid @RequestBody Tarea tareaActualizada) {
+        Tarea tareaExistente = tareaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Tarea no encontrada con ID: " + id));
+
+        tareaExistente.setNombre(tareaActualizada.getNombre());
+        tareaExistente.setCompletada(tareaActualizada.isCompletada());
+        tareaExistente.setPrioridad(tareaActualizada.getPrioridad());
+        return tareaRepository.save(tareaExistente);
     }
+
 
     // Eliminar tarea
     @DeleteMapping("/{id}")
@@ -95,7 +94,6 @@ public class TareaController {
                 .filter(Tarea::isCompletada)
                 .count();
     }
-
 
 
     @GetMapping("/combinado")
